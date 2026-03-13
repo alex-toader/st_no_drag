@@ -1,6 +1,6 @@
 # Tests Map
 
-## Test Files (26 tests, ~3 min total)
+## Test Files (28 tests, ~3 min total)
 
 ### 1_test_selection_rule.py (5 tests)
 
@@ -12,14 +12,16 @@ Selection rule M₀ = 0 for belt m=2 mode.
 - **test_kelvin_selection_rule** -- M₀ = 0 on all 16 Kelvin cells (all identical truncated octahedra)
 - **test_c15_belt_counts** -- All 24 C15 cells have belts; Z12 has N=6, Z16 has N=8
 
-### 2_test_kinematic_gap.py (4 tests)
+### 2_test_kinematic_gap.py (6 tests)
 
-Kinematic gap: belt frequencies above acoustic ceiling.
+Kinematic gap: belt frequencies above acoustic ceiling. Subsonic particle velocity.
 
 - **test_c15_gap_exists** -- C15 gap ratio omega_belt_min / omega_edge > 1.2
 - **test_c15_belt_above_acoustic** -- omega_edge ~ 0.69, omega_belt_min ~ 1.15 (expected ranges)
 - **test_kelvin_gap_exists** -- Kelvin gap ratio > 1
 - **test_c15_belt_basis_dimensions** -- C15 belt basis: 96D enriched, 16D particle (cos2theta x n_hat)
+- **test_c15_subsonic** -- C15 v_g_max / v_T < 1 (measured 0.88)
+- **test_kelvin_subsonic** -- Kelvin v_g_max / v_T < 1 (measured 0.54)
 
 ### 3_test_wavepacket.py (4 tests)
 
@@ -64,7 +66,7 @@ Dipolar scaling: hop source radiates as k^2 not k^0 (C15).
 |-------------|-------|
 | Part 1a: Harmonic theorem (Bloch modes exact) | 3 (wavepacket) |
 | Part 1b: Kinematic gap (belt above acoustic ceiling) | 2 (gap exists, values, basis dims) |
-| Part 1c: Subsonic particle velocity | 2 (implicit in gap computation via projected H_eff) |
+| Part 1c: Subsonic particle velocity v_g < v_T | 2 (explicit: C15 0.88, Kelvin 0.54) |
 | Part 1d: Selection rule M₀ = 0 | 1 (Z12, Z16 control, Fourier, Kelvin) |
 | Part 1f: Beyond harmonic (FGR cubic) | 4 (1-phonon forbidden, channel decomposition) |
 | Part 1g: MD validation (eps^2 scaling) | 5 (harmonic baseline, scaling, COM, energy) |

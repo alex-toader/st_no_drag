@@ -37,6 +37,7 @@ from core_math.analysis.no_drag import (
     compute_acoustic_ceiling,
     compute_acousticness_ceiling,
     compute_particle_floor,
+    compute_projected_velocities,
 )
 from physics.bloch import DisplacementBloch
 
@@ -168,4 +169,40 @@ def test_c15_belt_basis_dimensions(c15_gap_data):
     )
     assert n_particle == 16, (
         f"Particle subspace dim = {n_particle}, expected 16"
+    )
+
+
+def test_c15_subsonic(c15_gap_data):
+    """C15 particle velocity v_g < v_T (subsonic)."""
+    d = c15_gap_data
+    from core_math.analysis.no_drag import _DEFAULT_BZ_DIRS
+    vel = compute_projected_velocities(
+        d['bloch'], d['Q_belt'], d['M_transfer'], d['n_particle'],
+        d['L'], bz_dirs=_DEFAULT_BZ_DIRS, n_k=40)
+
+    ratio = vel['vg_max_over_vT']
+    assert ratio < 1.0, (
+        f"C15 particle supersonic: v_g/v_T = {ratio:.3f}"
+    )
+    # Expected ~0.89 from release doc
+    assert ratio > 0.3, (
+        f"C15 v_g/v_T suspiciously small: {ratio:.3f}"
+    )
+
+
+def test_kelvin_subsonic(kelvin_gap_data):
+    """Kelvin particle velocity v_g < v_T (subsonic)."""
+    d = kelvin_gap_data
+    from core_math.analysis.no_drag import _DEFAULT_BZ_DIRS
+    vel = compute_projected_velocities(
+        d['bloch'], d['Q_belt'], d['M_transfer'], d['n_particle'],
+        d['L'], bz_dirs=_DEFAULT_BZ_DIRS, n_k=40)
+
+    ratio = vel['vg_max_over_vT']
+    assert ratio < 1.0, (
+        f"Kelvin particle supersonic: v_g/v_T = {ratio:.3f}"
+    )
+    # Expected ~0.55 from release doc
+    assert ratio > 0.1, (
+        f"Kelvin v_g/v_T suspiciously small: {ratio:.3f}"
     )

@@ -18,14 +18,14 @@ Verified on two foam geometries: C15 (Laves phase, 16 Z12 + 8 Z16 cells) and Kel
 
 ## Tests
 
-26 tests across 6 files (~3 min total). Each test file targets one claim of the no-drag mechanism.
+28 tests across 6 files (~3 min total). Each test file targets one claim of the no-drag mechanism.
 
 See `tests/tests_map.md` for the complete inventory with per-test descriptions and paper mappings.
 
 ```
 tests/
 ├── 1_test_selection_rule.py     (5 tests)  M₀ = 0 on Z12/Kelvin, M₀ != 0 on Z16
-├── 2_test_kinematic_gap.py      (4 tests)  Belt above acoustic ceiling on C15 and Kelvin
+├── 2_test_kinematic_gap.py      (6 tests)  Belt above acoustic ceiling + subsonic velocity
 ├── 3_test_wavepacket.py         (4 tests)  Zero acoustic emission at Gamma (Kelvin)
 ├── 4_test_fgr_cubic.py          (5 tests)  FGR channel decomposition (Kelvin)
 ├── 5_test_md_cubic.py           (4 tests)  MD validation: eps² scaling, energy conservation
