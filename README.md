@@ -20,13 +20,13 @@ Verified on three foam geometries:
 
 ## Tests
 
-79 tests across 7 files (~10 min total). Each test file targets one claim.
+82 tests across 7 files (~10 min total). Each test file targets one claim.
 
 See `tests/tests_map.md` for the complete inventory with per-test descriptions.
 
 ```
 tests/
-├── 1_test_selection_rule.py     (12 tests)  M₀ = 0 selection rule + mechanism
+├── 1_test_selection_rule.py     (15 tests)  M₀ = 0 selection rule + mechanism
 ├── 2_test_kinematic_gap.py      (18 tests)  Belt above acoustic ceiling + gap robustness
 ├── 3_test_wavepacket.py         (10 tests)  Zero acoustic emission at Gamma
 ├── 4_test_fgr_cubic.py          ( 9 tests)  FGR channel decomposition (Kelvin)

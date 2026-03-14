@@ -314,9 +314,20 @@ regardless of the face-weight function, because centrosymmetry
 guarantees $A_{j'} = A_j$.  The same argument applies to all six
 enriched belt vectors per cell ($\vn$, $\hat{\vvr}$, $\hat{\bm{t}}$
 $\times$ cos/sin), so the entire belt subspace $Q_{\mathrm{belt}}$ has
-zero center of mass.  Kelvin is a special case: $O_h$~symmetry gives a
-flat belt ($\vn_{\mathrm{ax}} \equiv 0$), protecting all angular
-modes~$m$, not just even~$m$.
+zero center of mass.  Kelvin is a special case: $O_h$~symmetry (which includes inversion)
+protects all even~$m$, and additionally gives a flat belt
+($\vn_{\mathrm{ax}} \equiv 0$).  More generally, $M_0 = 0$ whenever the
+force distribution has no component in the trivial representation of
+the site symmetry group.  As an example, the C15 Z16 cells ($T_d$,
+no~inversion) have $M_0 = 0$ at $m = N/2 = 4$: the eight belt normals
+form two $S_4$ orbits of four, each satisfying
+$\sum_{\mathrm{orbit}} A_j \hat{n}_j = 0$.  Because $\cos(4\theta)$
+is constant within each orbit, $M_0$ factorises as
+$c_A \cdot 0 + c_B \cdot 0 = 0$.  At $m = 2$, $\cos(2\theta)$
+varies within orbits and factorisation fails, giving $M_0 \neq 0$.
+This is genuine $S_4$ protection---confirmed by linear growth
+of~$M_0$ under vertex jitter---not Nyquist aliasing (the belt angles
+are unequally spaced).
 
 At finite~$\vk$, the Bloch phase $e^{i\vk \cdot \vvr}$ breaks pair
 cancellation.  The leading correction is dipolar (linear in~$k$),
@@ -645,7 +656,7 @@ trajectories).  (iv)~Multipole hierarchy beyond dipole.
 
 All computations use Python~3.9, NumPy~\cite{numpy},
 SciPy~\cite{scipy} (LAPACK/BLAS).  Source code and a structured test
-suite (7~files, 79~tests) are available at
+suite (7~files, 82~tests) are available at
 \url{https://github.com/alex-toader/st_no_drag}.  The test suite
 covers: selection rule $M_0 = 0$ on all protected cells with Z16 and
 Type~B negative controls, even/odd-$m$ Fourier decomposition,

@@ -1,6 +1,6 @@
 # Tests Map
 
-## Test Files (79 tests, ~10 min total)
+## Test Files (82 tests, ~10 min total)
 
 ### Infrastructure (inline in src, runs at build time)
 
@@ -11,7 +11,7 @@ A reviewer reading the source sees the checks directly.
 - **kelvin.py** (strict=True) -- V=24, E=36, F=14, χ=2, deg=3, Σface=2E, edge∈2faces, d₁d₀=0
 - **multicell_periodic.py** -- V=12N³, χ₂=C, χ₃=0, deg=4, 3faces/edge, 2cells/face, d₁d₀=0
 
-### 1_test_selection_rule.py (12 tests)
+### 1_test_selection_rule.py (15 tests)
 
 Selection rule M₀ = 0 for belt m=2 mode. Antipodal symmetry of normal tilt.
 
@@ -24,8 +24,11 @@ Selection rule M₀ = 0 for belt m=2 mode. Antipodal symmetry of normal tilt.
 - **test_c15_z12_all_m_selection_rule** -- Even m (2,4) protected, odd m (1,3,5) not
 - **test_c15_z12_antipodal_tilt** -- n_ax[i] = -n_ax[i+N/2] on Z12 (WHY even m protected)
 - **test_c15_z16_symmetric_tilt** -- n_ax[i] = +n_ax[i+N/2] on Z16 (WHY even m NOT protected)
-- **test_kelvin_flat_belt** -- n_ax ≡ 0 on Kelvin (flat belt → all m protected)
+- **test_kelvin_flat_belt** -- n_ax ≡ 0 on Kelvin (flat belt; even m protected by Oh inversion)
+- **test_kelvin_m_scan** -- Kelvin even m (2,4) protected (Oh inversion); odd m (1,3,5) NOT protected (radial forces survive)
+- **test_c15_z16_m_scan** -- Z16 m=4 (=N/2) protected by S4 symmetry (not inversion, not Nyquist); m=2 not protected
 - **test_c15_m0_linear_in_jitter** -- M₀ ∝ δ with coefficient ~1.78 (symmetry, not topology)
+- **test_c15_z16_m4_jitter** -- Z16 m=4: M₀ ∝ δ with coefficient ~3.76 (S4 symmetry, not Nyquist aliasing)
 - **test_chain_complex_does_not_explain_m0** -- d₁d₀=0 universal (Z12 AND Z16); ||D₀u₀|| ≈ 1.06 vs 1.02 (not floppy); M₀ differs by 15 orders (negative control)
 
 ### 2_test_kinematic_gap.py (18 tests)

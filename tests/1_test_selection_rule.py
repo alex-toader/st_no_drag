@@ -20,7 +20,8 @@ MECHANISM (verified in tests below):
   Z16 belt (N=8): n_ax[i] = +n_ax[i+N/2] (symmetric, not antipodal).
     → n_ax has even harmonics (m=2,6) → cos(2θ) beats → M₀ ≠ 0.
   Kelvin belt (N=6): n_ax ≡ 0 (flat belt, all normals ⊥ belt axis).
-    → All modes m are protected.
+    → Oh includes inversion → all even m protected (same as Z12).
+    → Odd m NOT protected (radial forces survive despite flat belt).
 
 NOTES:
   - cell_type is determined by face count (12 or 16 faces). This is a
@@ -345,7 +346,9 @@ def test_c15_z16_symmetric_tilt(c15_mesh):
 def test_kelvin_flat_belt(kelvin_mesh):
     """Kelvin: n_ax ≡ 0 (belt is flat, all normals perpendicular to belt axis).
 
-    Flat belt → ALL modes m are protected, not just even m.
+    Oh includes inversion, so all even m are protected (same mechanism
+    as Z12). The flat belt is a consequence of the higher Oh symmetry.
+    Odd m (1,3,5) are NOT protected: their radial forces survive.
     """
     v, f, cfi, centers, L = kelvin_mesh
     from core_math.analysis.no_drag import _belt_geometry
@@ -363,6 +366,57 @@ def test_kelvin_flat_belt(kelvin_mesh):
     print(f"Kelvin max |n_ax| = {max_n_ax:.2e} (flat belt)")
     assert max_n_ax < 1e-12, (
         f"Kelvin belt not flat: max |n_ax| = {max_n_ax:.2e}"
+    )
+
+
+def test_kelvin_m_scan(kelvin_mesh):
+    """Kelvin per-m scan: even m protected (Oh inversion), odd m not.
+
+    M0 has two components: axial (along belt axis) and radial (in belt
+    plane). Flat belt (n_ax=0) kills the axial component for all m.
+    Inversion (Oh ⊃ Ci) kills the radial component at even m only:
+      n_{j+N/2} = -n_j  and  cos(m*(theta+pi)) = (-1)^m cos(m*theta)
+      Even m: radial forces cancel in pairs => M0 = 0
+      Odd m: radial forces reinforce => M0 != 0
+    """
+    v, f, cfi, centers, L = kelvin_mesh
+    from core_math.analysis.no_drag import _belt_geometry
+
+    m_values = [1, 2, 3, 4, 5]
+    max_m0_per_m = {}
+
+    for m in m_values:
+        max_m0 = 0.0
+        for ci in range(len(centers)):
+            bg = _belt_geometry(ci, centers, v, f, cfi, L)
+            if bg is None:
+                continue
+            circuit, theta, normals, areas, bn, fd = bg
+            N = len(circuit)
+            pressure = np.cos(m * theta)
+            M0_vec = np.zeros(3)
+            for idx in range(N):
+                M0_vec += pressure[idx] * areas[idx] * normals[idx]
+            max_m0 = max(max_m0, np.linalg.norm(M0_vec))
+        max_m0_per_m[m] = max_m0
+
+    for m, val in max_m0_per_m.items():
+        status = "= 0 (protected)" if val < 1e-12 else "> 0 (NOT protected)"
+        print(f"Kelvin m={m}: max |M₀| = {val:.2e}  {status}")
+
+    # Even m protected by Oh inversion
+    assert max_m0_per_m[2] < 1e-12, (
+        f"Kelvin m=2 should be protected: {max_m0_per_m[2]:.2e}"
+    )
+    assert max_m0_per_m[4] < 1e-12, (
+        f"Kelvin m=4 should be protected: {max_m0_per_m[4]:.2e}"
+    )
+    # Odd m NOT protected (radial forces survive despite flat belt)
+    assert max_m0_per_m[1] > 0.1, (
+        f"Kelvin m=1 should NOT be protected: {max_m0_per_m[1]:.2e}"
+    )
+    assert max_m0_per_m[3] > 0.1, (
+        f"Kelvin m=3 should NOT be protected: {max_m0_per_m[3]:.2e}"
     )
 
 
@@ -413,6 +467,110 @@ def test_c15_m0_linear_in_jitter():
     # Coefficient is O(1)
     assert 0.5 < ratios.mean() < 5.0, (
         f"M₀/δ coefficient unexpected: {ratios.mean():.2f}"
+    )
+
+
+def test_c15_z16_m4_jitter():
+    """Z16 m=4 protection is by S4 symmetry, not Nyquist aliasing.
+
+    Under vertex jitter δ, M₀(m=4) grows linearly (symmetry-broken).
+    Nyquist aliasing would survive perturbation. The thetas are NOT
+    equally spaced (55.6° and 34.4° alternating), confirming this is
+    genuine S4 protection.
+
+    Coefficient M₀/δ ≈ 3.8 at small δ, comparable to Z12 m=2 (≈1.8).
+    """
+    from core_math.analysis.no_drag import _belt_geometry
+
+    N, L_cell = 1, 1.0
+    points_exact = get_c15_points(N, L_cell)
+    L = N * L_cell
+
+    np.random.seed(42)
+    noise = np.random.randn(*points_exact.shape)
+
+    deltas = [1e-4, 5e-4, 1e-3]
+    ratios = []
+
+    for delta in deltas:
+        points_j = points_exact + delta * noise
+        vj, ej, fj, cfij = build_c15_supercell_periodic(N, L_cell, points=points_j)
+        centersj = np.array(points_j)
+        ctj = np.array([12 if len(cfij[ci]) == 12 else 16
+                         for ci in range(len(cfij))])
+        z16_j = [ci for ci in range(len(centersj)) if ctj[ci] == 16]
+
+        m0_vals = []
+        for ci in z16_j:
+            bg = _belt_geometry(ci, centersj, vj, fj, cfij, L)
+            circuit, theta, normals, areas, bn, fd = bg
+            pressure = np.cos(4 * theta)
+            M0_vec = np.zeros(3)
+            for idx in range(len(circuit)):
+                M0_vec += pressure[idx] * areas[idx] * normals[idx]
+            m0_vals.append(np.linalg.norm(M0_vec))
+
+        m0_max = max(m0_vals)
+        ratios.append(m0_max / delta)
+
+    ratios = np.array(ratios)
+    spread = (ratios.max() - ratios.min()) / ratios.mean()
+    print(f"Z16 m=4 M₀/δ ratios: {ratios}, spread = {100*spread:.1f}%")
+    # Linear scaling: M₀/δ should be approximately constant
+    assert spread < 0.15, (
+        f"M₀(m=4) not linear in δ: spread = {100*spread:.1f}%"
+    )
+    # Coefficient is O(1)
+    assert 0.5 < ratios.mean() < 10.0, (
+        f"M₀/δ coefficient unexpected: {ratios.mean():.2f}"
+    )
+
+
+def test_c15_z16_m_scan(c15_mesh):
+    """Z16 per-m scan: m=2 not protected (no inversion), m=4 protected (S4).
+
+    Z16 has Td symmetry (no inversion). For m=2: M₀ ≠ 0 (Td does not
+    protect m=2). For m=4 = N/2 (N=8 belt faces): M₀ = 0 because
+    the 8 belt normals split into two S4 orbits (4 faces each) under
+    the improper rotation S4: (x,y,z) → (y,−x,−z). Each orbit's
+    area-weighted normals sum to zero (Σ area·n̂ = 0 per orbit).
+    At m=4, cos(4θ) is constant within each orbit (+1.000 on A,
+    −0.737 on B), so M₀ = c_A·sum_A + c_B·sum_B = 0.
+    At m=2, cos(2θ) varies within orbits (±1 on A), breaking
+    factorization → M₀ ≠ 0.  NOT Nyquist aliasing: thetas are
+    unequally spaced (55.6° and 34.4° alternating).
+    """
+    v, e, f, cfi, centers, L, cell_type = c15_mesh
+    from core_math.analysis.no_drag import _belt_geometry
+
+    z16_cells = [ci for ci in range(len(centers)) if cell_type[ci] == 16]
+    m_values = [1, 2, 3, 4, 5, 6, 7]
+    max_m0_per_m = {}
+
+    for m in m_values:
+        max_m0 = 0.0
+        for ci in z16_cells:
+            bg = _belt_geometry(ci, centers, v, f, cfi, L)
+            circuit, theta, normals, areas, bn, fd = bg
+            N = len(circuit)
+            pressure = np.cos(m * theta)
+            M0_vec = np.zeros(3)
+            for idx in range(N):
+                M0_vec += pressure[idx] * areas[idx] * normals[idx]
+            max_m0 = max(max_m0, np.linalg.norm(M0_vec))
+        max_m0_per_m[m] = max_m0
+
+    for m, val in max_m0_per_m.items():
+        status = "= 0 (protected)" if val < 1e-12 else "> 0 (NOT protected)"
+        print(f"Z16 m={m}: max |M₀| = {val:.2e}  {status}")
+
+    # m=4 = N/2 protected by rotational averaging (not inversion)
+    assert max_m0_per_m[4] < 1e-12, (
+        f"Z16 m=4 should be protected: {max_m0_per_m[4]:.2e}"
+    )
+    # m=2 NOT protected (paper's negative control)
+    assert max_m0_per_m[2] > 0.01, (
+        f"Z16 m=2 should NOT be protected: {max_m0_per_m[2]:.2e}"
     )
 
 
