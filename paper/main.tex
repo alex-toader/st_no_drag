@@ -44,8 +44,8 @@ force cancellation ($M_0=0$), while the under-constrained Plateau
 vertex degree ($z=4<z_c=6$) generates a spectral gap between acoustic
 and belt-mode frequencies.  Anharmonic decay via two-phonon processes
 gives a lifetime of $\sim\!10^8$ oscillation periods at strain
-$\varepsilon=0.01$.  The results are supported by 78~numerical tests
-with machine-precision verification.
+$\varepsilon=0.01$.  The results are supported by extensive numerical
+verification at machine precision.
 \end{abstract}
 
 % =======================================================================
@@ -58,43 +58,48 @@ phonon bath through its force distribution on surrounding vertices.
 If the net force (force monopole) is nonzero, $M_0 = \sum_i \vF_i
 \neq 0$, the excitation radiates as an acoustic monopole: emission
 scales as~$k^0$ and drag is finite, always.  This is the standard
-picture for defects in crystals~\cite{Lifshitz1956}, vortices in
+picture for defects in crystals~\cite{Eshelby1951}, vortices in
 superfluids~\cite{Thouless1996}, and localized modes in
 metamaterials~\cite{Matlack2018}.
 
-The question we address is classical and fundamental: \emph{can a
-localized excitation propagate through an elastic medium without
-acoustic radiation?}
+Two conditions are sufficient to suppress this radiation:
+(i)~force monopole cancellation ($M_0 = 0$), so the leading coupling
+vanishes, and (ii)~a kinematic gap---excitation frequency above the
+acoustic ceiling ($\obelt > \oedge$)---so single-phonon decay is
+forbidden.  Both conditions are individually
+well known---multipole selection rules appear throughout
+elasticity~\cite{Eshelby1951} and energy gaps throughout condensed
+matter~\cite{Landau1941}.  What has not been recognized is that
+\emph{Plateau foams naturally satisfy both conditions simultaneously}:
+the under-constrained vertex degree~$z = 4$ produces the spectral
+gap, while centrosymmetric Wyckoff sites produce monopole
+cancellation.
 
-We show the answer is yes, under two geometric conditions:
-\begin{enumerate}
-\item \textbf{Force monopole cancellation} ($M_0 = 0$).  The
-  excitation pushes equally in all directions; the net force vanishes.
-  Acoustic coupling then starts at dipolar order, scaling as~$k^2$.
-\item \textbf{Kinematic gap} ($\obelt > \oedge$).  The excitation
-  frequency sits above the acoustic band, forbidding single-phonon
-  decay by energy conservation.
-\end{enumerate}
-When both hold: exact zero emission at the zone center~$\Gamma$,
-$k^2$~suppression at finite~$k$, and anharmonic lifetime of~$10^8$
-oscillation periods.
-
-We verify this mechanism on three Plateau--Voronoi foam structures
-(Fig.~\ref{fig:dispersion}): C15 Laves (Fd$\bar{3}$m, 24~cells),
-Kelvin BCC (Im$\bar{3}$m, 16~cells), and Weaire--Phelan
-(Pm$\bar{3}$n, 8~cells).  Despite different space groups, cell
-counts, and topologies, all three show the same physics: monopole
-cancellation from centrosymmetric cells and a kinematic gap from the
-under-constrained Plateau vertex degree.  The mechanism is purely
-geometric---no parameter tuning is required.
+We show this on three foam structures~\cite{Weaire1999} with
+different space groups: C15 Laves~\cite{FrankKasper1958}
+(Fd$\bar{3}$m, 24~cells), Kelvin BCC~\cite{Thomson1887}
+(Im$\bar{3}$m, 16~cells), and Weaire--Phelan~\cite{WeairePhelan1994}
+(Pm$\bar{3}$n, 8~cells).  The structural chain is:
+\begin{quote}
+Plateau vertex degree ($z = 4$) $\to$ Maxwell
+underconstraint~\cite{Maxwell1864} ($E = 2V$, $\sim\!V$ floppy modes)
+$\to$ kinematic gap ($\obelt > \oedge$ when $k_T > 0$),\\[2pt]
+centrosymmetric Wyckoff site $\to$ antipodal normal cancellation $\to$
+$M_0 = 0$.
+\end{quote}
+When both hold: exact zero acoustic emission at the zone
+center~$\Gamma$, $k^2$~(dipolar) suppression at finite~$k$, and
+anharmonic lifetime of~$\sim\!10^8$ oscillation periods.  All three
+structures exhibit the same physics despite different cell counts and
+topologies.  No parameter tuning is required.
 
 \paragraph{Connection to Landau criterion.}
-The kinematic gap is analogous in spirit to the Landau energy criterion
-in superfluids: there, $v < \min(\omega/k)$ forbids phonon emission;
-here, $\obelt > \oedge$ forbids single-phonon decay.  The analogy is
-in the energy criterion, not the velocity picture---the belt
-excitation oscillates in place and does not propagate at a macroscopic
-velocity.
+The kinematic gap is reminiscent of the Landau energy
+criterion~\cite{Landau1941} in superfluids: there, $v < \min(\omega/k)$
+forbids phonon emission; here, $\obelt > \oedge$ forbids single-phonon
+decay.  The parallel is in the energy condition, not the velocity
+picture---the belt excitation oscillates in place and does not
+propagate at a macroscopic velocity.
 
 The paper is organized as follows.  Section~\ref{sec:framework}
 presents the general framework (multipole expansion, two conditions,
@@ -193,8 +198,8 @@ cancellation.}
 \label{sec:setup}
 
 Consider a periodic cell complex with vertices, edges, faces, and
-cells, equipped with harmonic springs on edges (longitudinal
-stiffness~$k_L$, transverse stiffness~$k_T$).  A localized
+cells, equipped with harmonic springs on edges~\cite{BornHuang}
+(longitudinal stiffness~$k_L$, transverse stiffness~$k_T$).  A localized
 excitation is a deformation pattern on the boundary of one cell,
 producing a force distribution $\vF_i = -(D\, u_0)_i$ on the
 surrounding vertices, where $D$ is the dynamical matrix and $u_0$ the
@@ -210,8 +215,8 @@ where the force multipoles are
   M_0 &= \sum_i \vF_i \quad \text{(monopole --- net force)}, \\
   M_1 &= \sum_i \vvr_i \otimes \vF_i \quad \text{(dipole)}.
 \end{align}
-The acoustic coupling is $|\langle \psi_{\mathrm{ac}} | u_0
-\rangle|^2 = |M(\vk)|^2$, which gives
+In the long-wavelength limit, the acoustic coupling is $|\langle
+\psi_{\mathrm{ac}} | u_0 \rangle|^2 \approx |M(\vk)|^2$, giving
 \begin{equation}
   |M(\vk)|^2 = |M_0|^2 + k^2 |M_1|^2 + \mathcal{O}(k^4).
   \label{eq:multipole}
@@ -252,7 +257,8 @@ $Q_{\mathrm{belt}}$ is the orthonormal belt basis.  If $\obelt >
 \label{sec:theorem}
 
 \begin{quote}
-\textbf{Theorem.}  Let $u_0$ be an even-$m$ belt excitation on a
+\textbf{Theorem.}  Let $u_0$ be an even-$m$ belt excitation (or more
+generally, any force distribution with vanishing monopole) on a
 Voronoi cell whose site symmetry includes inversion.  Then $\langle
 e_{\mathrm{ac}} | u_0 \rangle = 0$ for all acoustic eigenmodes
 $e_{\mathrm{ac}}$ at $\vk = 0$.
@@ -268,7 +274,7 @@ For even-$m$ belt pressure, $\cos(m\theta_{j'}) = \cos(m(\theta_j +
 \pi)) = \cos(m\theta_j)$.  Each antipodal pair contributes
 \begin{equation}
   \cos(m\theta_j)(A_j \vn_j + A_{j'} \vn_{j'})
-  = \cos(m\theta_j)\, A_j\, (\vn_j - \vn_j) = 0.
+  = \cos(m\theta_j)\, A_j\, (\vn_j + (-\vn_j)) = 0.
 \end{equation}
 The monopole $M_0 = \sum_{j} \cos(m\theta_j)\, A_j\, \vn_j = 0$ as a
 sum over $N/2$ cancelling pairs.  At $\vk = 0$, acoustic eigenmodes
@@ -276,9 +282,13 @@ are uniform translations $(e_d)_{3i+d'} = \delta_{dd'}/\sqrt{V}$,
 so $\langle e_d | u_0 \rangle = \mathrm{COM}_d(u_0)/\sqrt{V} = 0$.
 \hfill$\square$
 
-Table~\ref{tab:wyckoff} lists the Wyckoff positions of each cell type
-in the three structures.  The theorem predicts exactly which cells are
-protected ($M_0 = 0$) and which are not, with no free parameters.
+The argument uses only $\sum_i \vF_i = 0$ on a centrosymmetric site;
+the belt mode is a physically relevant realization, but any force
+distribution with vanishing monopole on such a site is equally
+protected.  Table~\ref{tab:wyckoff} lists the Wyckoff positions of
+each cell type in the three structures.  The theorem predicts exactly
+which cells are protected ($M_0 = 0$) and which are not, with no free
+parameters.
 
 \begin{table}[b]
 \caption{Site symmetry and monopole cancellation.  Cells at sites with
@@ -328,17 +338,22 @@ Transport coupling is therefore dipolar: $|M(k)|^2 \propto k^2$.
 \subsection{Why Plateau foams satisfy both conditions}
 \label{sec:why_foams}
 
-Plateau foams have vertex degree~4 (Plateau's law), giving edge count
-$E = 2V$ and coordination $z = 4 < z_c = 6$.  The Maxwell count
+Plateau foams have vertex degree~4 (Plateau's
+law~\cite{Plateau1873}), giving edge count $E = 2V$ and coordination
+$z = 4 < z_c = 6$.  The Maxwell count~\cite{Maxwell1864,Calladine1978}
 $M = 3V - E = V$ predicts $\sim\!V$ floppy modes in the central-force
 limit ($k_T = 0$).  Numerically: Kelvin has 94 and Weaire--Phelan has
 44 non-trivial floppy modes, close to $V = 96$ and $V = 46$
 respectively (discrepancy from states of self-stress).
 
 Adding transverse stiffness $k_T > 0$ lifts these floppy modes into
-the optical band, creating the kinematic gap.  Belt modes are a subset
-of these lifted modes.  The gap is therefore a structural consequence
-of the Plateau vertex degree, not parameter fine-tuning.
+the optical band.  Because the acoustic ceiling is set by
+long-wavelength translations (controlled by macroscopic elastic
+moduli), while the lifted floppy modes populate the lowest optical
+frequencies, a spectral separation between the two naturally appears.
+Belt modes are a subset of this lifted floppy manifold; the gap is
+therefore a structural consequence of the Plateau vertex degree, not
+parameter fine-tuning.
 
 Simultaneously, the polyhedral cells of Plateau foams possess
 equatorial belts.  When the cell sits at a centrosymmetric Wyckoff
@@ -348,10 +363,11 @@ $M_0 = 0$.  Both conditions thus follow from Plateau foam geometry.
 \subsection{C15 Laves structure}
 \label{sec:c15}
 
-The C15 Laves phase (space group Fd$\bar{3}$m, No.~227) has 24~cells
+The C15 Laves phase~\cite{FrankKasper1958} (space group Fd$\bar{3}$m,
+No.~227) has 24~cells
 per conventional domain: 16~dodecahedra (Z12, 12~pentagonal faces) at
-Wyckoff position~$16d$ ($\bar{3}m$) and 8~hexakaidecahedra (Z16,
-16~faces) at position~$8a$ ($T_d$).
+Wyckoff position~$16d$ ($\bar{3}m$) and 8~Z16 cells
+(16~faces) at position~$8a$ ($T_d$).
 
 The Z12 belt has $N = 6$ faces with $m = 2$ angular mode.  The
 selection rule $M_0 = 0$ holds on all 16~Z12 cells to machine
@@ -448,8 +464,9 @@ does not imply dynamic coupling.
   Dark lines: three acoustic branches.  Red (dark) bands have belt
   character above twice the random baseline.  Gray bands: remaining
   optical modes.  Dashed lines mark $\oedge = 0.694$ (acoustic
-  ceiling) and $\obelt = 1.025$ (belt floor).  Arrow indicates the
-  kinematic gap (ratio~1.48).}
+  ceiling) and $\obelt = 1.025$ (belt floor, minimum eigenvalue of
+  $H_{\mathrm{belt}}$ over the full BZ, not only $[100]$).  Arrow
+  indicates the kinematic gap (ratio~1.48).}
   \label{fig:dispersion}
 \end{figure}
 
@@ -510,8 +527,8 @@ is specific to protected (Z12--Z12) hop pairs.
 
 The harmonic decoupling theorem gives exact zero emission
 at~$\Gamma$.  Anharmonicity opens decay channels.  We quantify these
-using Fermi's golden rule (FGR) and molecular dynamics (MD), both on
-the Kelvin structure.
+using Fermi's golden rule~\cite{Sakurai} (FGR) and molecular
+dynamics~\cite{Verlet1967} (MD), both on the Kelvin structure.
 
 \subsection{Fermi's golden rule}
 \label{sec:fgr}
@@ -552,16 +569,26 @@ $|\Delta E/E| < 10^{-5}$.
 
 \paragraph{Two independent protections.}
 Monopole cancellation ($M_0 = 0$) and the kinematic gap are logically
-independent.  Breaking symmetry alone ($M_0 \neq 0$) still leaves the
-gap, which forbids single-phonon decay.  Breaking the gap alone opens
-single-phonon channels, but $M_0 = 0$ still ensures $k^2$~suppression.
-On Plateau foams both hold simultaneously, providing double protection.
+independent conditions with distinct physical origins:
 
-The gap arises because belt modes are lifted floppy modes: in the
-central-force limit ($k_T = 0$) they are zero-energy mechanisms
-(Maxwell count~$V$); transverse stiffness lifts them into the optical
-band.  The monopole cancellation arises from cell centrosymmetry at
-the Wyckoff site.  Neither condition requires parameter tuning.
+\begin{tabular}{lll}
+\hline
+& Origin & Effect \\
+\hline
+$M_0 = 0$ & site inversion symmetry & $k^2$ coupling (dipolar) \\
+$\obelt > \oedge$ & Plateau underconstraint & 1-phonon decay forbidden \\
+\hline
+\end{tabular}
+
+\noindent
+Breaking symmetry alone ($M_0 \neq 0$) still leaves the gap, which
+forbids single-phonon decay.  Breaking the gap alone opens
+single-phonon channels, but $M_0 = 0$ still ensures
+$k^2$~suppression.  On Plateau foams both hold simultaneously: the
+gap arises because belt modes are lifted floppy
+modes~\cite{Lubensky2015} (Maxwell count~$\sim\!V$ at $k_T = 0$),
+while monopole cancellation arises from cell centrosymmetry at the
+Wyckoff site.  Neither condition requires parameter tuning.
 
 \paragraph{Geometric, not topological.}
 The protection is geometric (continuous symmetry), not topological.
@@ -575,7 +602,8 @@ from $M_0 \neq 0$.
 Three structures with different space groups (Fd$\bar{3}$m,
 Im$\bar{3}$m, Pm$\bar{3}$n), different cell counts (24, 16, 8), and
 different cell topologies all show the same mechanism.  The theorem
-(Sec.~\ref{sec:theorem}) is lattice-general: any periodic structure
+(Sec.~\ref{sec:theorem}) applies to any force distribution whose
+monopole vanishes on a centrosymmetric site; any periodic structure
 satisfying $M_0 = 0$ and possessing a kinematic gap will exhibit the
 same physics.  Metamaterials engineered for these conditions could
 extend the mechanism beyond foams.
@@ -589,11 +617,23 @@ unprotected cells are optical (above the gap) and do not break the
 mechanism.
 
 \paragraph{Landau analogy.}
-The kinematic gap $\obelt > \oedge$ is analogous in spirit to the
-Landau energy criterion $v < \min(\omega/k)$ for superfluidity.  Both are frequency
+The kinematic gap $\obelt > \oedge$ is reminiscent of the
+Landau energy criterion~\cite{Landau1941} $v < \min(\omega/k)$ for
+superfluidity.  Both are frequency
 (energy) conditions that forbid phonon emission.  The physical context
 differs: the Landau criterion applies to continuous flow, while the
 belt excitation undergoes discrete hops.
+
+\paragraph{Physical predictions.}
+The mechanism predicts three observable consequences:
+(i)~long-lived localized belt excitations ($\tau \sim 10^8$ periods at
+$\varepsilon = 0.01$) that persist far beyond acoustic time scales;
+(ii)~subsonic transport: when belt excitations hop between cells, the
+group velocity is subsonic ($v_{g,c}/v_T = 0.33$ on C15) and the hop
+source radiates as a dipole, not a monopole;
+(iii)~the conditions $M_0 = 0$ and $\obelt > \oedge$ can be
+engineered independently---any lattice with centrosymmetric sites and
+$z < z_c$ is a candidate for drag-free excitation transport.
 
 \paragraph{Open directions.}
 (i)~Non-foam lattices (metamaterials designed for $M_0 = 0$ plus
@@ -601,15 +641,34 @@ gap).  (ii)~Finite-temperature estimates ($\varepsilon_T \sim
 \sqrt{k_B T / k}$).  (iii)~Full transport simulations (hop
 trajectories).  (iv)~Multipole hierarchy beyond dipole.
 
-\section*{Acknowledgments}
-Numerical computations used NumPy and SciPy~\cite{numpy,scipy}.  All
-results are reproducible from the 78~tests in the accompanying code
-repository.
+\section*{Reproducibility}
+
+All computations use Python~3.9, NumPy~\cite{numpy},
+SciPy~\cite{scipy} (LAPACK/BLAS).  Source code and a structured test
+suite (7~files, 79~tests) are available at
+\url{https://github.com/alex-toader/st_no_drag}.  The test suite
+covers: selection rule $M_0 = 0$ on all protected cells with Z16 and
+Type~B negative controls, even/odd-$m$ Fourier decomposition,
+antipodal tilt mechanism, jitter sensitivity; kinematic gap existence,
+robustness across $k_L/k_T \in [1,3]$ and all BZ directions,
+convergence, belt-floor eigenvalue verification on three structures,
+hop-source spectral weight below acoustic ceiling; wavepacket zero
+acoustic emission (displacement and velocity), source-cell
+independence, belt-basis coverage, finite-$k$ dipolar scaling;
+Fermi's golden rule channel decomposition (1-phonon forbidden,
+optical dominance, rate linearity in~$\eta$, lifetime estimate); MD
+validation ($\varepsilon^2$ scaling, energy conservation, COM drift);
+dipolar scaling $k^2$ on multiple hop pairs and BZ directions,
+monopole and mixed-pair negative controls, cell-size independence;
+Weaire--Phelan full verification (topology, selection rule, gap,
+wavepacket, hop source).  All numerical claims in this paper are
+backed by reproducible scripts.
 
 \begin{thebibliography}{20}
 
-\bibitem{Lifshitz1956}
-I.~M.~Lifshitz, Sov.\ Phys.\ JETP \textbf{3}, 939 (1956).
+\bibitem{Eshelby1951}
+J.~D.~Eshelby, Phil.\ Trans.\ R.\ Soc.\ Lond.\ A \textbf{244}, 87
+(1951).
 
 \bibitem{Thouless1996}
 D.~J.~Thouless, P.~Ao, and Q.~Niu,
@@ -618,6 +677,49 @@ Phys.\ Rev.\ Lett.\ \textbf{76}, 3758 (1996).
 \bibitem{Matlack2018}
 K.~H.~Matlack, M.~Serra-Garcia, A.~Palermo, S.~D.~Huber, and
 C.~Daraio, Nat.\ Mater.\ \textbf{17}, 323 (2018).
+
+\bibitem{Landau1941}
+L.~D.~Landau, J.\ Phys.\ (USSR) \textbf{5}, 71 (1941).
+
+\bibitem{BornHuang}
+M.~Born and K.~Huang, \emph{Dynamical Theory of Crystal Lattices}
+(Oxford University Press, Oxford, 1954).
+
+\bibitem{Plateau1873}
+J.~A.~F.~Plateau, \emph{Statique Exp\'erimentale et Th\'eorique des
+Liquides Soumis aux Seules Forces Mol\'eculaires} (Gauthier-Villars,
+Paris, 1873).
+
+\bibitem{Thomson1887}
+W.~Thomson (Lord Kelvin), Phil.\ Mag.\ \textbf{24}, 503 (1887).
+
+\bibitem{WeairePhelan1994}
+D.~Weaire and R.~Phelan, Phil.\ Mag.\ Lett.\ \textbf{69}, 107 (1994).
+
+\bibitem{Weaire1999}
+D.~Weaire and S.~Hutzler, \emph{The Physics of Foams}
+(Oxford University Press, Oxford, 1999).
+
+\bibitem{FrankKasper1958}
+F.~C.~Frank and J.~S.~Kasper, Acta Crystallogr.\ \textbf{11}, 184
+(1958).
+
+\bibitem{Maxwell1864}
+J.~C.~Maxwell, Phil.\ Mag.\ \textbf{27}, 294 (1864).
+
+\bibitem{Calladine1978}
+C.~R.~Calladine, Int.\ J.\ Solids Struct.\ \textbf{14}, 161 (1978).
+
+\bibitem{Lubensky2015}
+T.~C.~Lubensky, C.~L.~Kane, X.~Mao, A.~Souslov, and K.~Sun,
+Rep.\ Prog.\ Phys.\ \textbf{78}, 073901 (2015).
+
+\bibitem{Sakurai}
+J.~J.~Sakurai and J.~Napolitano, \emph{Modern Quantum Mechanics},
+3rd~ed.\ (Cambridge University Press, Cambridge, 2021).
+
+\bibitem{Verlet1967}
+L.~Verlet, Phys.\ Rev.\ \textbf{159}, 98 (1967).
 
 \bibitem{numpy}
 C.~R.~Harris \emph{et~al.}, Nature \textbf{585}, 357 (2020).

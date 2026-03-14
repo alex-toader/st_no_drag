@@ -1,6 +1,6 @@
 # Tests Map
 
-## Test Files (78 tests, ~10 min total)
+## Test Files (79 tests, ~10 min total)
 
 ### Infrastructure (inline in src, runs at build time)
 
@@ -28,7 +28,7 @@ Selection rule M₀ = 0 for belt m=2 mode. Antipodal symmetry of normal tilt.
 - **test_c15_m0_linear_in_jitter** -- M₀ ∝ δ with coefficient ~1.78 (symmetry, not topology)
 - **test_chain_complex_does_not_explain_m0** -- d₁d₀=0 universal (Z12 AND Z16); ||D₀u₀|| ≈ 1.06 vs 1.02 (not floppy); M₀ differs by 15 orders (negative control)
 
-### 2_test_kinematic_gap.py (17 tests)
+### 2_test_kinematic_gap.py (18 tests)
 
 Kinematic gap: belt frequencies above acoustic ceiling. Subsonic particle velocity.
 Gap is structural (survives at isotropy k_L=k_T) and isotropic (>1 in all 9 BZ dirs).
@@ -44,6 +44,7 @@ Holds under both omega[2] and 10% acousticness definitions of acoustic ceiling.
 - **test_c15_gap_all_bz_directions** -- Gap ratio > 1 in all 9 BZ directions (worst-case [111]: 1.736)
 - **test_kelvin_belt_basis_dimensions** -- Kelvin belt basis: same formula as C15 (96D/16D for N=2)
 - **test_c15_centroid_more_subsonic** -- v_g_centroid/v_T = 0.334 << v_g_max/v_T = 0.711
+- **test_kelvin_centroid_subsonic** -- Kelvin v_g_centroid/v_T = 0.150 (subsonic)
 - **test_c15_gap_convergence** -- ω_edge converged: Δ=0 between n_k=40 and n_k=80
 - **test_gap_vs_kL_kT_ratio** -- Gap > 1 for all k_L/k_T ∈ [1,3] (min 1.503 at isotropy)
 - **test_acousticness_ceiling_consistent** -- ω[2]=0.694 < ac_10%=0.935 < belt=1.179; strict gap 1.260

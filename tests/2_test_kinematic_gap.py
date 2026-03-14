@@ -245,6 +245,21 @@ def test_kelvin_subsonic(kelvin_gap_data):
     )
 
 
+def test_kelvin_centroid_subsonic(kelvin_gap_data):
+    """Kelvin centroid velocity subsonic: v_g_centroid < v_T."""
+    vel = kelvin_gap_data['vel']
+    ratio_max = vel['vg_max_over_vT']
+    ratio_cen = vel['vg_centroid_over_vT']
+    print(f"Kelvin v_g_max/v_T = {ratio_max:.3f}, v_g_centroid/v_T = {ratio_cen:.3f}")
+
+    assert ratio_cen < ratio_max, (
+        f"Centroid {ratio_cen:.3f} >= max {ratio_max:.3f}"
+    )
+    assert ratio_cen < 0.5, (
+        f"Centroid velocity ratio unexpectedly large: {ratio_cen:.3f}"
+    )
+
+
 def test_c15_gap_survives_isotropy(c15_gap_data):
     """Gap survives at k_L = k_T (isotropic springs): structural, not parameter artifact."""
     d = c15_gap_data
