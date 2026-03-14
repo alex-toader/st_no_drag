@@ -15,6 +15,12 @@ into low-ω modes (proxy for acoustic sector).
 Uses Kelvin N=3 (972 DOF, 18 low-omega modes). N=2 has 0 low-omega
 modes at Γ, making the test vacuous.
 
+RAW OUTPUT (pytest -v -s, Mar 2026):
+  test_harmonic_baseline       Harmonic E_low max = 4.26e-32
+  test_eps_squared_scaling     E_low/eps²: [7.38e-09, 7.39e-09, 7.39e-09], spread = 0.0%
+  test_com_zero                COM drift max = 1.32e-30
+  test_energy_conservation     E0 = 1.687534e-02, Ef = 1.687533e-02, |dE/E| = 6.91e-07
+
 References:
   physics_ai/ST_11/wip/w_15_kelvin_no_drag/04_md_cubic.py
   physics_ai/ST_11/src/1_foam/tests/physics/no_drag/16_md_drag_measurement.py
@@ -30,7 +36,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from core_math.builders.multicell_periodic import (
     build_bcc_supercell_periodic, generate_bcc_centers
 )
-from core_math.analysis.no_drag import build_enriched_belt_vectors
+from core_math.analysis.no_drag import (
+    build_enriched_belt_vectors, compute_acoustic_ceiling
+)
 from physics.bloch import DisplacementBloch
 from core_math.dynamics.md_foam import (
     harmonic_force_spring, cubic_force, verlet_step, prepare_edges,
@@ -94,14 +102,26 @@ def md_system():
     edge_info = prepare_edges(v, e, L)
     k_L, k_T = 2.0, 1.0
 
-    edges_list = [list(edge) for edge in e]
-    bloch = DisplacementBloch(v, edges_list, L, k_L=k_L, k_T=k_T, mass=1.0)
-    D = bloch.build_dynamical_matrix(np.zeros(3)).real
-    evals, evecs = np.linalg.eigh(D)
+    bloch = DisplacementBloch(v, e, L, k_L=k_L, k_T=k_T, mass=1.0)
+    D0_complex = bloch.build_dynamical_matrix(np.zeros(3))
+    assert np.allclose(D0_complex.imag, 0, atol=1e-14), (
+        f"D(k=0) has imaginary part: max|imag| = {np.max(np.abs(D0_complex.imag)):.2e}"
+    )
+    D0 = np.real(D0_complex)
+    evals, evecs = np.linalg.eigh(D0)
     omega = np.sqrt(np.maximum(evals, 0))
 
     Q_trans = _build_Q_trans(nv)
-    omega_cut = 0.8022
+
+    # Acoustic ceiling: primitive-cell value (N=2 BZ scan gives 0.8022).
+    # Cannot use compute_acoustic_ceiling(bloch, L) here because for N=3
+    # the supercell BZ is smaller, giving omega_edge = 0.54 which misses
+    # the folded acoustic modes between 0.54 and 0.80.
+    bloch_n2 = DisplacementBloch(
+        *build_bcc_supercell_periodic(2)[:2], 2 * 4.0,
+        k_L=k_L, k_T=k_T, mass=1.0)
+    res_ceil = compute_acoustic_ceiling(bloch_n2, 2 * 4.0)
+    omega_cut = res_ceil['omega_edge']
 
     # Source belt vector
     box_center = np.array([L/2, L/2, L/2])
@@ -116,7 +136,7 @@ def md_system():
     u0, v0 = remove_com(u0, v0, nv)
 
     # MD parameters
-    omega_belt_min = omega[omega > 1.0].min()
+    omega_belt_min = omega[omega > omega_cut].min()
     T_belt = 2 * np.pi / omega_belt_min
     dt = 0.001
     n_periods = 8
@@ -144,6 +164,7 @@ def test_harmonic_baseline(md_system):
         d['evecs'], d['omega'], d['Q_trans'], d['omega_cut'],
         d['check_every'])
 
+    print(f"Harmonic E_low max = {E_low.max():.2e}")
     assert E_low.max() < 1e-25, (
         f"Harmonic E_low not zero: max = {E_low.max():.2e}"
     )
@@ -154,7 +175,7 @@ def test_eps_squared_scaling(md_system):
     d = md_system
     k_L, ell0 = d['k_L'], d['ell0']
 
-    eps_values = [0.03, 0.1]
+    eps_values = [0.03, 0.06, 0.1]
     sat_over_eps2 = []
 
     for eps in eps_values:
@@ -176,10 +197,11 @@ def test_eps_squared_scaling(md_system):
         E_sat = E_low[n_half:].mean()
         sat_over_eps2.append(E_sat / eps**2)
 
-    # Check scaling: spread < 30%
+    # Check scaling: spread < 10%
     ratios = np.array(sat_over_eps2)
     spread = (ratios.max() - ratios.min()) / ratios.mean()
-    assert spread < 0.30, (
+    print(f"E_low/eps²: {[f'{r:.2e}' for r in ratios]}, spread = {100*spread:.1f}%")
+    assert spread < 0.10, (
         f"ε² scaling fails: spread = {100*spread:.1f}%, "
         f"ratios = {ratios}"
     )
@@ -199,6 +221,7 @@ def test_com_zero(md_system):
         d['evecs'], d['omega'], d['Q_trans'], d['omega_cut'],
         d['check_every'])
 
+    print(f"COM drift max = {com.max():.2e}")
     assert com.max() < 1e-20, (
         f"COM drift not zero: max = {com.max():.2e}"
     )
@@ -227,6 +250,7 @@ def test_energy_conservation(md_system):
          cubic_energy(u_final, d['edge_info'], alpha)
 
     rel_drift = abs(Ef - E0) / abs(E0)
+    print(f"E0 = {E0:.6e}, Ef = {Ef:.6e}, |dE/E| = {rel_drift:.2e}")
     assert rel_drift < 1e-5, (
         f"Energy not conserved: relative drift = {rel_drift:.2e}"
     )

@@ -6,31 +6,38 @@ No-drag protection for belt-mode excitations in 3D foam lattices.
 
 ## Result
 
-The m=2 belt mode (shear deformation on hexagonal faces) propagates between foam cells without losing energy to the acoustic sector. Three independent protections:
+The m=2 belt mode (shear deformation on equatorial faces) propagates between foam cells without losing energy to the acoustic sector. Two geometric conditions:
 
-1. **Selection rule M₀ = 0** -- the net force from belt m=2 pressure is exactly zero on Z12 cells (C15) and all Kelvin cells. At finite q, coupling is dipolar (|M(q)|² ~ q²), not monopolar.
-2. **Kinematic gap** -- belt frequencies sit above the acoustic ceiling (gap ratio 1.21 on C15 with COM-coherent definition, 1.33 on Kelvin). No sound-like mode exists at belt frequencies.
-3. **Harmonic theorem** -- Bloch eigenmodes are exact stationary states. No irreversible energy transfer between bands.
+1. **Force monopole cancellation M₀ = 0** — centrosymmetric cells produce antipodal force cancellation. At finite k, coupling is dipolar (|M(k)|² ~ k²), not monopolar.
+2. **Kinematic gap ω_belt > ω_edge** — belt frequencies sit above the acoustic ceiling. Single-phonon decay is forbidden by energy conservation.
 
-Beyond harmonic: cubic anharmonicity (Fermi's Golden Rule) gives a perturbative decay rate Gamma/omega = eps² * f with f ~ 10⁻⁵ (Kelvin). MD validation confirms eps² scaling.
+When both hold: exact zero emission at the zone center, k² suppression at finite k, and anharmonic lifetime of ~10⁸ oscillation periods at ε = 0.01.
 
-Verified on two foam geometries: C15 (Laves phase, 16 Z12 + 8 Z16 cells) and Kelvin (BCC Voronoi, truncated octahedra).
+Verified on three foam geometries:
+- **C15 Laves** (Fd3̄m, 24 cells: 16 Z12 + 8 Z16)
+- **Kelvin BCC** (Im3̄m, 16 truncated octahedra)
+- **Weaire–Phelan** (Pm3̄n, 8 cells: 2 Type A + 6 Type B)
 
 ## Tests
 
-28 tests across 6 files (~3 min total). Each test file targets one claim of the no-drag mechanism.
+78 tests across 7 files (~10 min total). Each test file targets one claim.
 
-See `tests/tests_map.md` for the complete inventory with per-test descriptions and paper mappings.
+See `tests/tests_map.md` for the complete inventory with per-test descriptions.
 
 ```
 tests/
-├── 1_test_selection_rule.py     (5 tests)  M₀ = 0 on Z12/Kelvin, M₀ != 0 on Z16
-├── 2_test_kinematic_gap.py      (6 tests)  Belt above acoustic ceiling + subsonic velocity
-├── 3_test_wavepacket.py         (4 tests)  Zero acoustic emission at Gamma (Kelvin)
-├── 4_test_fgr_cubic.py          (5 tests)  FGR channel decomposition (Kelvin)
-├── 5_test_md_cubic.py           (4 tests)  MD validation: eps² scaling, energy conservation
-└── 6_test_dipolar_scaling.py    (4 tests)  Hop source radiates as k² not k⁰ (C15)
+├── 1_test_selection_rule.py     (12 tests)  M₀ = 0 selection rule + mechanism
+├── 2_test_kinematic_gap.py      (17 tests)  Belt above acoustic ceiling + gap robustness
+├── 3_test_wavepacket.py         (10 tests)  Zero acoustic emission at Gamma
+├── 4_test_fgr_cubic.py          ( 9 tests)  FGR channel decomposition (Kelvin)
+├── 5_test_md_cubic.py           ( 4 tests)  MD validation: ε² scaling, energy conservation
+├── 6_test_dipolar_scaling.py    ( 8 tests)  Hop source radiates as k² not k⁰ (C15)
+└── 7_test_wp.py                 (18 tests)  Weaire–Phelan: all claims on third structure
 ```
+
+## Paper
+
+`paper/main.tex` — full manuscript draft with 4 figures.
 
 ## Source code
 
@@ -42,6 +49,7 @@ src/
 │   │   └── cell_topology.py     Cell geometry, circuit finding, caps
 │   ├── builders/
 │   │   ├── c15_periodic.py      C15 supercell builder
+│   │   ├── wp_periodic.py       Weaire–Phelan supercell builder
 │   │   ├── multicell_periodic.py  Kelvin/BCC supercell builder
 │   │   └── kelvin.py            Base Kelvin cell
 │   ├── dynamics/
@@ -59,7 +67,7 @@ src/
 ## Running tests
 
 ```bash
-# All tests (~3 min)
+# All tests (~10 min)
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 /usr/bin/python3 -m pytest tests/ -v
 
 # Single test file

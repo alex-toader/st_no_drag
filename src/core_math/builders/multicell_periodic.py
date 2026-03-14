@@ -8,13 +8,15 @@ GEOMETRY:
     Period: L = 4N in each direction
     All coordinates wrapped: x → x mod L
 
-TOPOLOGY (verified Jan 2026):
+TOPOLOGY (verified Mar 2026, checked at build time):
     This is a FOAM (Plateau structure), NOT a 2-manifold!
 
+    - V = 12N³ (24 vertices/cell, each shared by 4 cells)
     - χ(2-skeleton) = V - E + F = C (number of 3-cells)
     - χ(3-complex) = V - E + F - C = 0 (correct for T³)
-    - Every edge bounds exactly 3 faces (Plateau border!)
-    - Tr(d₁ᵀd₁) = 3E (foam trace theorem)
+    - Every vertex has degree 4 (Plateau vertex)
+    - Every edge bounds exactly 3 faces (Plateau border)
+    - Every face shared by exactly 2 cells
     - d₁ @ d₀ = 0 (orientations consistent)
 
     Key insight: BCC Kelvin is space-filling foam where each edge
@@ -38,8 +40,8 @@ from typing import Tuple, List, Dict, Set
 from itertools import product
 
 from .kelvin import build_kelvin_cell
-from ..spec.structures import create_mesh, canonical_face
-from ..spec.constants import COMPLEX_FOAM, WRAP_DECIMALS, EPS_CLOSE
+from ..spec.structures import canonical_face
+from ..spec.constants import WRAP_DECIMALS, EPS_CLOSE
 
 
 def wrap_coord(x: float, L: float) -> float:
@@ -95,6 +97,9 @@ def build_bcc_supercell_periodic(N: int) -> Tuple[np.ndarray, List[Tuple[int, in
         χ(3-complex) = V - E + F - C = 0 (3-torus)
         Every edge bounds exactly 3 faces (Plateau border)
     """
+    if N < 1:
+        raise ValueError(f"N must be >= 1, got {N}")
+
     L = 4.0 * N  # period
 
     # Get base Kelvin cell
@@ -184,166 +189,52 @@ def build_bcc_supercell_periodic(N: int) -> Tuple[np.ndarray, List[Tuple[int, in
         for cell_idx, orientation in data['cells'].items():
             cell_face_incidence[cell_idx].append((face_idx, orientation))
 
-    return np.array(vertices), edges, faces, cell_face_incidence
+    # Verify foam invariants
+    V, E, F = len(vertices), len(edges), len(faces)
+    C = 2 * N**3
 
+    # V = 12N³ (24 vertices per cell, each shared by 4 cells)
+    if V != 12 * N**3:
+        raise ValueError(f"Expected V={12*N**3}, got {V}")
 
-def get_periodic_topology(N: int) -> Dict:
-    """
-    Compute topology numbers for periodic N×N×N BCC supercell.
+    # χ(2-skeleton) = C, χ(3-complex) = 0
+    if V - E + F != C:
+        raise ValueError(f"χ₂ = {V-E+F}, expected C={C}")
 
-    Returns:
-        dict with V, E, F, C, chi_2skeleton, chi_3complex
+    # Vertex degree = 4 (Plateau vertex: 4 borders meet)
+    from collections import Counter
+    deg = Counter()
+    for i, j in edges:
+        deg[i] += 1
+        deg[j] += 1
+    bad_deg = {v: d for v, d in deg.items() if d != 4}
+    if bad_deg:
+        raise ValueError(f"{len(bad_deg)} vertices not degree 4")
 
-    KEY INSIGHT (Jan 2026):
-        - χ(2-skeleton) = V - E + F = C (number of cells), NOT 0
-        - χ(3-complex) = V - E + F - C = 0 (correct for T³)
-        - This is a FOAM: every edge bounds 3 faces (Plateau)
-    """
-    vertices, edges, faces, _ = build_bcc_supercell_periodic(N)
+    # Each edge bounds exactly 3 faces (Plateau border)
+    edge_face_count = Counter()
+    for face in faces:
+        n = len(face)
+        for k in range(n):
+            e = (min(face[k], face[(k+1)%n]), max(face[k], face[(k+1)%n]))
+            edge_face_count[e] += 1
+    bad_ef = {e: c for e, c in edge_face_count.items() if c != 3}
+    if bad_ef:
+        raise ValueError(f"{len(bad_ef)} edges not in exactly 3 faces")
 
-    V = len(vertices)
-    E = len(edges)
-    F = len(faces)
-    C = 2 * N**3  # Number of 3-cells (Kelvin cells)
+    # Each face shared by exactly 2 cells
+    for canonical, data in face_data.items():
+        nc = len(data['cells'])
+        if nc != 2:
+            raise ValueError(f"Face has {nc} cells, expected 2")
 
-    chi_2skeleton = V - E + F  # This equals C, not 0!
-    chi_3complex = V - E + F - C  # This is 0 for T³
+    # d₁d₀ = 0 (exactness: consistent orientations)
+    from ..operators.incidence import build_d0, build_d1
+    verts_arr = np.array(vertices)
+    d0 = build_d0(verts_arr, edges)
+    d1 = build_d1(verts_arr, edges, faces)
+    product = d1 @ d0
+    if product.any():
+        raise ValueError(f"d₁d₀ ≠ 0: max entry = {abs(product).max()}")
 
-    return {
-        'N': N,
-        'n_cells': C,
-        'V': V,
-        'E': E,
-        'F': F,
-        'C': C,
-        'chi_2skeleton': chi_2skeleton,
-        'chi_3complex': chi_3complex,
-        'chi_2skeleton_equals_C': chi_2skeleton == C,
-        'is_valid_T3': chi_3complex == 0
-    }
-
-
-def verify_foam_structure(d1: np.ndarray, E: int) -> Dict:
-    """
-    Verify foam structure (Plateau: every edge bounds 3 faces).
-
-    For BCC Kelvin foam, edges are Plateau borders where 3 soap films meet.
-    This is different from a 2-manifold where each edge bounds 2 faces.
-
-    Args:
-        d1: (F, E) incidence matrix
-        E: number of edges
-
-    Returns:
-        dict with verification results
-    """
-    # Count how many faces each edge bounds
-    faces_per_edge = np.sum(np.abs(d1), axis=0)
-
-    all_bound_3 = np.all(faces_per_edge == 3)
-    min_bound = np.min(faces_per_edge)
-    max_bound = np.max(faces_per_edge)
-
-    # Trace theorem for foam: Tr(d₁ᵀd₁) = 3E
-    d1td1 = d1.T @ d1
-    trace = np.trace(d1td1)
-    expected_trace_foam = 3 * E
-    trace_ok = abs(trace - expected_trace_foam) < EPS_CLOSE
-
-    return {
-        'is_plateau_foam': all_bound_3,
-        'min_faces_per_edge': int(min_bound),
-        'max_faces_per_edge': int(max_bound),
-        'trace_d1td1': int(trace),
-        'expected_trace_foam': expected_trace_foam,
-        'foam_trace_theorem_holds': trace_ok
-    }
-
-
-# =============================================================================
-# CONTRACT-COMPLIANT WRAPPER
-# =============================================================================
-
-def build_bcc_foam_periodic(N: int, name: str = None) -> dict:
-    """
-    Build N×N×N periodic BCC foam as contract-compliant mesh dict.
-
-    This is a TRUE FOAM with 3 faces per edge (Plateau structure).
-
-    Args:
-        N: supercell size (2N³ cells total)
-        name: mesh name (auto-generated if None)
-
-    Returns:
-        Contract-compliant mesh dict with:
-        - complex_type = "foam"
-        - faces_per_edge = 3
-        - cell_face_incidence for d₂ support
-
-    NOTE: N≥2 required. At N=1, some faces are "self-glued" (identified with
-    themselves under periodic wrap), which breaks d₂ verification (each face
-    must appear in exactly 2 distinct cells with opposite orientations).
-    """
-    if N < 2:
-        raise ValueError(
-            f"BCC foam periodic requires N≥2, got N={N}. "
-            f"At N=1, faces are self-glued under periodic identification, "
-            f"which breaks d₂ (cell-face incidence) structure."
-        )
-
-    if name is None:
-        name = f"bcc_foam_{N}x{N}x{N}"
-
-    V, E, F, cell_face_inc = build_bcc_supercell_periodic(N)
-    n_cells = 2 * N**3
-    L = 4.0 * N  # Period length: each Kelvin cell has side 4, N cells per dimension
-
-    return create_mesh(
-        V=V,
-        E=E,
-        F=F,
-        complex_type=COMPLEX_FOAM,
-        name=name,
-        n_cells=n_cells,
-        periodic=True,
-        cell_face_incidence=cell_face_inc,
-        period_L=L
-    )
-
-
-# Test when run directly
-if __name__ == "__main__":
-    import sys
-    sys.path.insert(0, str(__file__).rsplit('/', 2)[0])
-    from operators import build_operators_from_mesh
-
-    print("=" * 60)
-    print("PERIODIC BCC FOAM - CONTRACT VERIFICATION")
-    print("=" * 60)
-
-    for N in [1, 2]:
-        print(f"\n--- N = {N} ({2*N**3} cells) ---")
-
-        mesh = build_bcc_foam_periodic(N)
-        print(f"Mesh: {mesh['name']}")
-        print(f"complex_type: {mesh['complex_type']}")
-        print(f"faces_per_edge: {mesh['faces_per_edge']}")
-        print(f"V={mesh['n_V']}, E={mesh['n_E']}, F={mesh['n_F']}")
-
-        topo = get_periodic_topology(N)
-        print(f"χ(2-skeleton) = {topo['chi_2skeleton']} (expected C = {topo['C']})")
-        print(f"χ(3-complex) = {topo['chi_3complex']} (expected 0 for T³)")
-
-        # Build operators with contract
-        ops = build_operators_from_mesh(mesh)
-        E = mesh['n_E']
-        k = mesh['faces_per_edge']
-
-        print(f"\nTrace identities (k={k}):")
-        print(f"  Tr(d₀d₀ᵀ) = {ops['traces']['Tr_d0d0t']:.0f} (expected 2E = {2*E})")
-        print(f"  Tr(d₁ᵀd₁) = {ops['traces']['Tr_d1td1']:.0f} (expected {k}E = {k*E})")
-        print(f"  Tr(L₁)    = {ops['traces']['Tr_L1']:.0f} (expected {2+k}E = {(2+k)*E})")
-
-    print("\n" + "=" * 60)
-    print("Contract verification complete.")
-    print("=" * 60)
+    return verts_arr, edges, faces, cell_face_incidence

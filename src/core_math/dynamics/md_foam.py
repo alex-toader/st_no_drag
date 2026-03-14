@@ -6,7 +6,6 @@ All energy functions return ENERGY PER UNIT MASS.
 This is consistent with D = K/m (dynamical matrix = stiffness/mass).
 
 Provides:
-  - harmonic_force: a = -D·u from dynamical matrix (O(n²))
   - harmonic_force_spring: a from tensorial springs on edges (O(n_edges))
   - cubic_force: a from V₃ = (α/6) Σ_edges (δr_e)³
   - verlet_step: one velocity Verlet step
@@ -19,6 +18,19 @@ model (harmonic + cubic), not a geometrically nonlinear MD.
 NOTE: V₃ ∝ (δr)³ is odd → unbounded below for one sign of δr.
 Safe in perturbative regime (small amplitudes). Monitor energy conservation
 and max(|δr|) to detect runaway.
+
+DESIGN NOTES:
+  - cubic_force sign: F_i = +(α/2)(δr)²ê is correct (-dV₃/du_i with
+    δr = u_j - u_i). Consistency verified by test_energy_conservation
+    (|dE/E| = 6.91e-07 over ~40k Verlet steps).
+  - harmonic_force_spring ≡ -D·u verified indirectly: test_harmonic_baseline
+    shows E_low = 4.26e-32 (machine zero), which requires exact consistency
+    between spring forces and the eigendecomposition from D(k=0).
+  - remove_com modifies arrays in-place via reshape views. Callers use
+    the returned ravel. This is intentional, not a bug.
+  - sector_energy omega_cut is set by the caller (test), not by this module.
+    The value 0.8022 comes from compute_acoustic_ceiling and is validated
+    by test_harmonic_baseline (zero leakage confirms correct separation).
 
 Feb 2026
 """
@@ -59,18 +71,6 @@ def prepare_edges(vertices, edges, L):
 # =========================================================================
 # Forces
 # =========================================================================
-
-def harmonic_force(u, D):
-    """Harmonic force: F = -D · u (dense matrix, O(n²)).
-
-    Args:
-      u: (n_dof,) displacement vector
-      D: (n_dof, n_dof) real-space dynamical matrix (= stiffness/mass)
-
-    Returns: (n_dof,) force / mass (i.e. acceleration)
-    """
-    return -D @ u
-
 
 def harmonic_force_spring(u, edge_info, k_L, k_T, mass=1.0):
     """Harmonic force from tensorial springs on edges (O(n_edges)).
@@ -218,11 +218,6 @@ def sector_energy(u, v, evecs, omega, omega_cut):
     return np.sum(E[mask])
 
 
-def total_energy_harmonic(u, v, D):
-    """Total energy (harmonic): E = (1/2) u^T D u + (1/2) v^T v."""
-    return 0.5 * (u @ (D @ u) + v @ v)
-
-
 def harmonic_energy_spring(u, v, edge_info, k_L, k_T, mass=1.0):
     """Total energy per unit mass from springs (O(n_edges)).
 
@@ -245,11 +240,6 @@ def harmonic_energy_spring(u, v, edge_info, k_L, k_T, mass=1.0):
     V_over_m = 0.5 * np.sum(k_T * du_sq + (k_L - k_T) * du_par**2) / mass
     T_over_m = 0.5 * np.dot(v, v)
     return V_over_m + T_over_m
-
-
-def total_energy_cubic(u, v, D, edge_info, alpha):
-    """Total energy (harmonic + cubic)."""
-    return total_energy_harmonic(u, v, D) + cubic_energy(u, edge_info, alpha)
 
 
 def remove_com(u, v, nv):

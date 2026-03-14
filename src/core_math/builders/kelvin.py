@@ -18,6 +18,12 @@ OUTPUTS (all derived from construction):
     F = 14 faces (6 squares + 8 hexagons)
     χ = V - E + F = 2 (Euler characteristic of closed surface)
 
+VERIFIED (strict=True, Mar 2026):
+    V=24, E=36, F=14, χ=2
+    All vertices degree 3, Σface_sizes = 2E = 72
+    Each edge in exactly 2 faces
+    d₁d₀ = 0 (orientations consistent)
+
 REFERENCE: Weaire & Phelan (1994), Kelvin (1887)
 """
 
@@ -25,8 +31,7 @@ import numpy as np
 from itertools import permutations
 from typing import Tuple, List, Dict
 
-from ..spec.structures import create_mesh
-from ..spec.constants import COMPLEX_SURFACE, EPS_CLOSE
+from ..spec.constants import EPS_CLOSE
 
 
 def build_vertices() -> Tuple[np.ndarray, Dict[tuple, int]]:
@@ -218,97 +223,37 @@ def build_kelvin_cell(strict: bool = True) -> Tuple[np.ndarray, List[Tuple[int, 
         if V - E + F != 2:
             raise ValueError(f"Euler characteristic should be 2, got {V - E + F}")
 
+        # Vertex degree = 3 (trivalent polyhedron)
+        deg = [0] * V
+        for i, j in edges:
+            deg[i] += 1
+            deg[j] += 1
+        if not all(d == 3 for d in deg):
+            raise ValueError(f"Not all vertices degree 3: {set(deg)}")
+
+        # Sum of face sizes = 2E (each edge bounds exactly 2 faces)
+        total_face_edges = sum(len(f) for f in faces)
+        if total_face_edges != 2 * E:
+            raise ValueError(f"Σ face_sizes={total_face_edges}, expected 2E={2*E}")
+
+        # Each edge appears in exactly 2 faces
+        from collections import Counter
+        edge_count = Counter()
+        for face in faces:
+            n = len(face)
+            for k in range(n):
+                e = (min(face[k], face[(k+1)%n]), max(face[k], face[(k+1)%n]))
+                edge_count[e] += 1
+        bad = {e: c for e, c in edge_count.items() if c != 2}
+        if bad:
+            raise ValueError(f"Edges not in exactly 2 faces: {len(bad)} bad edges")
+
+        # d₁d₀ = 0 (exactness: consistent orientations)
+        from ..operators.incidence import build_d0, build_d1
+        d0 = build_d0(vertices, edges)
+        d1 = build_d1(vertices, edges, faces)
+        product = d1 @ d0
+        if product.any():
+            raise ValueError(f"d₁d₀ ≠ 0: max entry = {abs(product).max()}")
+
     return vertices, edges, faces, v_to_idx
-
-
-def get_topology_numbers() -> Dict[str, int]:
-    """
-    Get the topological numbers of Kelvin cell.
-
-    These are COMPUTED from construction, not hardcoded.
-
-    Returns:
-        dict with keys: V, E, F, chi
-
-    FORMULAS:
-        V = 24 (permutations of (0,±1,±2))
-        E = 36 (vertices at distance √2)
-        F = 14 (6 squares + 8 hexagons)
-        χ = V - E + F = 2 (Euler characteristic)
-    """
-    vertices, edges, faces, _ = build_kelvin_cell()
-
-    V = len(vertices)
-    E = len(edges)
-    F = len(faces)
-    chi = V - E + F
-
-    return {'V': V, 'E': E, 'F': F, 'chi': chi}
-
-
-# =============================================================================
-# CONTRACT-COMPLIANT WRAPPERS
-# =============================================================================
-
-def build_kelvin_cell_mesh(name: str = "kelvin_cell") -> dict:
-    """
-    Build single Kelvin cell as contract-compliant mesh dict.
-
-    Single cell = SURFACE (closed 2-manifold, 2 faces/edge).
-    """
-    V, E, F, _ = build_kelvin_cell(strict=True)
-    return create_mesh(V, E, F, COMPLEX_SURFACE, name=name, n_cells=1)
-
-
-def build_kelvin_foam(n_cells: int = 1, name: str = None) -> dict:
-    """
-    DEPRECATED: Use build_bcc_foam_periodic() from multicell_periodic.py instead.
-
-    A single Kelvin cell has 2 faces/edge (surface), NOT 3 (foam).
-    Real Kelvin foam with 3 faces/edge requires the periodic multicell construction.
-
-    This function is kept for backwards compatibility but raises an error.
-    """
-    raise NotImplementedError(
-        "build_kelvin_foam is DEPRECATED. "
-        "A single Kelvin cell has 2 faces/edge (surface), not 3 (foam). "
-        "Use build_bcc_foam_periodic(N) from multicell_periodic.py for real foam."
-    )
-
-
-# Self-test when run directly
-if __name__ == "__main__":
-    print("=" * 60)
-    print("KELVIN CELL GEOMETRY - VERIFICATION")
-    print("=" * 60)
-
-    topo = get_topology_numbers()
-    print(f"\nTopology (computed from construction):")
-    print(f"  V = {topo['V']} vertices")
-    print(f"  E = {topo['E']} edges")
-    print(f"  F = {topo['F']} faces")
-    print(f"  χ = V - E + F = {topo['chi']}")
-
-    vertices, edges, faces, _ = build_kelvin_cell()
-
-    # Count face types
-    n_squares = sum(1 for f in faces if len(f) == 4)
-    n_hexagons = sum(1 for f in faces if len(f) == 6)
-    print(f"\nFace types:")
-    print(f"  {n_squares} squares (4 vertices each)")
-    print(f"  {n_hexagons} hexagons (6 vertices each)")
-
-    # Verify edge count from vertex degree
-    # Each vertex has degree 3, so sum of degrees = 2E
-    degree_sum = 0
-    for i in range(len(vertices)):
-        degree = sum(1 for e in edges if i in e)
-        degree_sum += degree
-    print(f"\nEdge verification:")
-    print(f"  Sum of vertex degrees = {degree_sum}")
-    print(f"  Expected 2E = {2 * len(edges)}")
-    print(f"  Match: {degree_sum == 2 * len(edges)}")
-
-    print("\n" + "=" * 60)
-    print("All verifications passed.")
-    print("=" * 60)

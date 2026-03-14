@@ -10,7 +10,32 @@ Functions for computing:
 
 All functions are foam-agnostic (work on C15, Kelvin, WP).
 
-Feb 2026
+DESIGN NOTES:
+  - compute_acoustic_ceiling uses omega[2] (3rd eigenvalue) directly.
+    No spurious zero modes exist at k≠0 in our geometries, so omega[2]
+    is always the 3rd acoustic branch. compute_acousticness_ceiling
+    provides an independent cross-check via translation projection.
+  - compute_projected_velocities identifies particle bands at Γ and
+    tracks them through BZ without re-identification. This is correct
+    because H_eff = Q_belt^T D Q_belt projects out acoustic modes —
+    particle bands in H_eff cannot cross with acoustic bands.
+  - vT is measured from avg(omega[0], omega[1]) at small k. The two
+    transverse modes are degenerate to < 0.6% (verified on C15
+    [100]/[110]/[111]), so the average differs from omega[0] by < 0.1%.
+  - _belt_geometry recomputes get_cell_geometry + find_best_belt on each
+    call. find_best_belt is deterministic (smallest eigenvalue, stable
+    sort), so repeated calls return identical results.
+
+SELECTION RULE — ANTIPODAL SYMMETRY:
+  The selection rule M₀ = 0 for even-m modes on Z12 cells is a consequence
+  of the antipodal tilt symmetry: n_ax[i] = -n_ax[i + N/2] in circuit order.
+  This means the normal axial tilt has only odd Fourier harmonics, so it
+  cannot beat with even-m pressure cos(mθ) to produce a net force.
+  - Z12 (N=6): antipodal → even m protected (m=2,4)
+  - Z16 (N=8): symmetric (n_ax[i] = +n_ax[i+N/2]) → odd m protected (m=1,3,5,7)
+  - Kelvin (N=6): n_ax ≡ 0 (flat belt) → all m protected
+
+Mar 2026
 """
 
 import numpy as np
@@ -118,39 +143,6 @@ def compute_selection_rule(ci, centers, v, f, cfi, L):
         'n_ax_spectrum': n_ax_spectrum,
         'n_belt': N,
     }
-
-
-# =========================================================================
-# Single belt displacement vector
-# =========================================================================
-
-def build_belt_m2_displacement(ci, centers, v, f, cfi, L):
-    """Build vertex displacement vector for the belt m=2 mode of cell ci.
-
-    Each belt face vertex moves along the outward face normal with
-    amplitude cos(2θ_j), where θ_j is the face center's azimuthal
-    angle in the belt plane.
-
-    Returns (u_vec, belt_N) or (None, None).
-    """
-    bg = _belt_geometry(ci, centers, v, f, cfi, L)
-    if bg is None:
-        return None, None
-
-    circuit, theta, normals, areas, bn, fd = bg
-    N = len(circuit)
-    amplitude = np.cos(2 * theta)
-
-    u_vec = np.zeros(3 * len(v))
-    for idx in range(N):
-        face = fd[circuit[idx]]
-        verts_f = face['vertices']
-        n_v = len(verts_f)
-        disp_per_vert = amplitude[idx] * normals[idx] / n_v
-        for vi in face['vertex_ids']:
-            u_vec[3 * vi: 3 * vi + 3] += disp_per_vert
-
-    return u_vec, N
 
 
 # =========================================================================
@@ -296,6 +288,10 @@ def build_belt_basis(belt_cells, centers, v, f, cfi, L):
         if old_vec is not None:
             old_vectors[ci] = old_vec
         all_raw.extend(vecs)
+
+    missing = [ci for ci in belt_cells if ci not in old_vectors]
+    if missing:
+        raise ValueError(f"Cells without belt: {missing}")
 
     if not all_raw:
         return None, None, None
@@ -587,8 +583,8 @@ def compute_projected_velocities(bloch, Q_belt, M_transfer, n_particle,
         Dk = bloch.build_dynamical_matrix(k_small)
         evals = np.sort(np.linalg.eigvalsh(Dk))
         omega = np.sqrt(np.maximum(evals, 0))
-        # Two transverse modes (lowest two)
-        vT = omega[0] / np.linalg.norm(k_small)
+        # Two transverse modes (lowest two): average for direction-dependent splitting
+        vT = 0.5 * (omega[0] + omega[1]) / np.linalg.norm(k_small)
         all_vT.append(vT)
     vT_avg = np.mean(all_vT)
 

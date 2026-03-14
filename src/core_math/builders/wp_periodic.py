@@ -1,39 +1,36 @@
 """
-Periodic C15 Laves (MgCu2) Supercell via Voronoi
-================================================
+Periodic Weaire-Phelan Supercell via Voronoi
+=============================================
 
-N×N×N C15 foam with PERIODIC boundary conditions (3-torus T³).
+N×N×N Weaire-Phelan foam with PERIODIC boundary conditions (3-torus T³).
 
 CONSTRUCTION:
-    1. Generate C15 lattice points (space group Fd-3m, No. 227)
+    1. Generate A15 lattice points (space group Pm3n, No. 223)
     2. Compute Voronoi tessellation with periodic images
     3. Order ridge vertices cyclically in face plane
     4. Extract vertices, edges, faces with wrapping
 
 STRUCTURE:
-    24 cells per fundamental domain:
-        - 8 cells at Wyckoff 8a (diamond sublattice)
-        - 16 cells at Wyckoff 16d (pyrochlore sublattice)
+    8 cells per fundamental domain:
+        - 2 Type A (dodecahedra) at Wyckoff 2a
+        - 6 Type B (tetrakaidecahedra) at Wyckoff 6d
 
-TOPOLOGY (verified at build time, Mar 2026):
+TOPOLOGY (verified at build time):
     - χ(2-skeleton) = V - E + F = C (number of cells)
     - χ(3-complex) = V - E + F - C = 0 (3-torus T³)
     - Every vertex has degree 4 (Plateau vertex)
     - Every edge bounds exactly 3 faces (Plateau border)
     - Every face shared by exactly 2 cells
     - d₁ @ d₀ = 0 (orientations consistent)
-    - Faces: pentagons and hexagons
+    - Faces: pentagons and hexagons only
+    - Type A (2a): 12 faces, Type B (6d): 14 faces
 
-ISOTROPY:
-    C15 has δv/v = 0.93%, which is 2.7× more isotropic than
-    Weaire-Phelan (δv/v = 2.53%).
-
-Date: Jan 2026
+Date: Mar 2026
 """
 
 import numpy as np
 from scipy.spatial import Voronoi
-from typing import Tuple, List, Dict, Optional
+from typing import Tuple, List, Dict
 from itertools import product
 
 from ..spec.structures import canonical_face as canonical_face_with_orient
@@ -120,100 +117,43 @@ def order_ridge_vertices(ridge_coords: np.ndarray, site1: np.ndarray, site2: np.
     return [idx for _, idx in angles]
 
 
-def canonical_face(face: List[int]) -> Optional[tuple]:
+def get_a15_points(N: int, L_cell: float = 1.0) -> np.ndarray:
     """
-    Canonicalize face for deduplication.
+    Generate A15 lattice points for N×N×N supercell.
+
+    A15 Wyckoff positions (space group Pm3n, No. 223):
+        2a: (0,0,0), (1/2,1/2,1/2)
+        6d: (1/4,0,1/2), (3/4,0,1/2), (1/2,1/4,0),
+            (1/2,3/4,0), (0,1/2,1/4), (0,1/2,3/4)
+
+    Total: 8 sites per unit cell
     """
-    if len(face) < 3:
-        return None
-    try:
-        canon, _ = canonical_face_with_orient(face)
-        return canon
-    except ValueError:
-        return None
-
-
-def get_c15_points(N: int, L_cell: float = 1.0) -> np.ndarray:
-    """
-    Generate C15 Laves lattice points for N×N×N supercell.
-
-    C15 (MgCu2-type) Wyckoff positions (space group Fd-3m, No. 227):
-        8a:  Diamond sublattice - (0,0,0), (1/4,1/4,1/4) + FCC
-        16d: Pyrochlore sublattice - (5/8,5/8,5/8) + permutations + FCC
-
-    Total: 24 sites per unit cell
-    """
-    # FCC translation vectors (in fractional coordinates)
-    fcc_translations = [
-        [0, 0, 0],
-        [0.5, 0.5, 0],
-        [0.5, 0, 0.5],
-        [0, 0.5, 0.5],
+    frac = [
+        [0, 0, 0], [0.5, 0.5, 0.5],           # 2a
+        [0.25, 0, 0.5], [0.75, 0, 0.5],        # 6d
+        [0.5, 0.25, 0], [0.5, 0.75, 0],
+        [0, 0.5, 0.25], [0, 0.5, 0.75],
     ]
-
-    # 8a sites (diamond sublattice)
-    sites_8a_base = [[0, 0, 0], [0.25, 0.25, 0.25]]
-
-    # 16d sites (pyrochlore sublattice)
-    sites_16d_base = [
-        [5/8, 5/8, 5/8],
-        [5/8, 3/8, 3/8],
-        [3/8, 5/8, 3/8],
-        [3/8, 3/8, 5/8],
-    ]
-
-    # Generate all fractional positions in unit cell
-    frac_positions = []
-
-    # 8a sites
-    for base in sites_8a_base:
-        for t in fcc_translations:
-            pos = [(base[j] + t[j]) % 1.0 for j in range(3)]
-            frac_positions.append(pos)
-
-    # 16d sites
-    for base in sites_16d_base:
-        for t in fcc_translations:
-            pos = [(base[j] + t[j]) % 1.0 for j in range(3)]
-            frac_positions.append(pos)
-
-    # Remove duplicates using deterministic rounding
-    # Round to 8 decimals and use set for dedup (more robust than tolerance checks)
-    seen = set()
-    unique_frac = []
-    for pos in frac_positions:
-        # Wrap to [0, 1) and round for deterministic comparison
-        wrapped = tuple(round(x % 1.0, 8) for x in pos)
-        # Handle edge case: 1.0 rounds to 1.0, should be 0.0
-        wrapped = tuple(0.0 if x == 1.0 else x for x in wrapped)
-        if wrapped not in seen:
-            seen.add(wrapped)
-            unique_frac.append(list(wrapped))
-
-    # Generate supercell points
     points = []
     for i, j, k in product(range(N), repeat=3):
-        for f in unique_frac:
+        for f in frac:
             p = [(i + f[0]) * L_cell, (j + f[1]) * L_cell, (k + f[2]) * L_cell]
             points.append(p)
-
     return np.array(points)
 
 
-def build_c15_supercell_periodic(
+def build_wp_supercell_periodic(
     N: int,
     L_cell: float = 4.0,
-    points: Optional[np.ndarray] = None
 ) -> Tuple[np.ndarray, List[Tuple[int, int]], List[List[int]], List[List[Tuple[int, int]]]]:
     """
-    Build N×N×N C15 Laves supercell with periodic boundary conditions.
+    Build N×N×N Weaire-Phelan supercell with periodic boundary conditions.
 
-    Uses Voronoi tessellation of C15 lattice.
+    Uses Voronoi tessellation of A15 lattice.
 
     Args:
-        N: supercell size (24N³ cells total)
+        N: supercell size (8N³ cells total)
         L_cell: side of fundamental domain
-        points: optional custom points array (for testing permutation invariance)
 
     Returns:
         vertices: (V, 3) array of unique vertex positions
@@ -232,10 +172,7 @@ def build_c15_supercell_periodic(
         raise ValueError(f"L_cell must be > 0, got {L_cell}")
 
     L = N * L_cell
-    if points is None:
-        points = get_c15_points(N, L_cell)
-    else:
-        points = np.asarray(points, dtype=float).copy()
+    points = get_a15_points(N, L_cell)
     n_pts = len(points)
 
     # Create 3×3×3 periodic images for Voronoi
@@ -362,7 +299,7 @@ def build_c15_supercell_periodic(
         faces.append(data['face'])
 
     # Build cell_face_incidence: for each cell, list of (face_idx, orientation)
-    n_cells = 24 * N**3
+    n_cells = 8 * N**3
     cell_face_incidence: List[List[Tuple[int, int]]] = [[] for _ in range(n_cells)]
     for canonical, data in face_data.items():
         face_idx = canonical_to_face_idx[canonical]
@@ -382,7 +319,7 @@ def build_c15_supercell_periodic(
 
     # Verify foam invariants
     V, E, F = len(vertices), len(edges), len(faces)
-    C = 24 * N**3
+    C = 8 * N**3
 
     # χ(2-skeleton) = C ⟹ χ(3-complex) = V - E + F - C = 0
     if V - E + F != C:
@@ -414,6 +351,17 @@ def build_c15_supercell_periodic(
         nc = len(data['cells'])
         if nc != 2:
             raise ValueError(f"Face has {nc} cells, expected 2")
+
+    # Faces: pentagons and hexagons only (A15 / Weaire-Phelan)
+    face_sizes = Counter(len(f) for f in faces)
+    if not set(face_sizes.keys()).issubset({5, 6}):
+        raise ValueError(f"Unexpected face sizes: {face_sizes}")
+
+    # Cell face counts: 2a (dodecahedra) = 12 faces, 6d (tetrakaidecahedra) = 14
+    for ci, cfi_ci in enumerate(cell_face_incidence):
+        expected = 12 if ci % 8 < 2 else 14
+        if len(cfi_ci) != expected:
+            raise ValueError(f"Cell {ci}: {len(cfi_ci)} faces, expected {expected}")
 
     # d₁d₀ = 0 (exactness)
     from ..operators.incidence import build_d0, build_d1
