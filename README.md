@@ -1,5 +1,6 @@
 # st_no_drag
 
+> [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19035807.svg)](https://doi.org/10.5281/zenodo.19035807)
 No-drag protection for belt-mode excitations in 3D foam lattices.
 
 **Author:** Alexandru Toader (toader_alexandru@yahoo.com)
